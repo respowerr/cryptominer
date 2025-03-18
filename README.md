@@ -1,14 +1,12 @@
 # Cryptominer
 
-Projet : **Cryptominer**, un projet de minage de cryptomonnaies développé en Rust par :
+Un crypto mineur est un virus de minage de cryptomonaie, généralement sur la puissance CPU, discret et sans endomager la machine.
+
+### Auteurs
 - **Adrien MESLIN** (snipzr)
 - **Jules NOIRET** (respowerr)
 - **Enzo PIZZUTI** (snikiEP)
-
-## À propos
-
-**Cryptominer** est un logiciel optimisé pour exploiter la puissance de calcul et miner efficacement des cryptomonnaies tout en garantissant une performance optimale.
-
+  
 ## Technologies
 
 - **Langage** : Rust
