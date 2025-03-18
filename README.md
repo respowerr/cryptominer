@@ -1,9 +1,9 @@
 # Cryptominer
 
 Projet : **Cryptominer**, un projet de minage de cryptomonnaies développé en Rust par :
-- **Adrien MESLIN**
-- **Jules NOIRET**
-- **Enzo PIZZUTI**
+- **Adrien MESLIN** (snipzr)
+- **Jules NOIRET** (respowerr)
+- **Enzo PIZZUTI** (snikiEP)
 
 ## À propos
 
