@@ -10,13 +10,13 @@ Un crypto mineur est un virus de minage de cryptomonaie, généralement sur la p
 ## Technologies
 
 - **Langage** : Rust
-- **Blockchain Supportée** : Bitcoin
+- **Blockchain Supportée** : Bitcoin ou autre
 
 ## Installation et exécution
 
 1. **Cloner le projet**
    ```sh
-   git@github.com:respowerr/cryptominer.git
+   git clone git@github.com:respowerr/cryptominer.git
    cd cryptominer
    ```
 2. **Compiler et exécuter**

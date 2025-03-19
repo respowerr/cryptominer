@@ -1,10 +1,7 @@
-# Cible de compilation (les fichiers générés par Cargo)
 target/
 
-# Fichiers de verrouillage et dépendances
 Cargo.lock
 
-# Dépendances compilées et fichiers temporaires
 **/*.rs.bk
 
 *.log
