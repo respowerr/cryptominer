@@ -1,0 +1,33 @@
+# Cible de compilation (les fichiers générés par Cargo)
+target/
+
+# Fichiers de verrouillage et dépendances
+Cargo.lock
+
+# Dépendances compilées et fichiers temporaires
+**/*.rs.bk
+
+*.log
+*.tmp
+*.swp
+
+.idea/
+.vscode/
+*.iml
+
+*.dSYM/
+*.pdb
+*.obj
+*.o
+*.dll
+*.so
+*.dylib
+
+/cryptominer/
+
+/target/doc/
+
+/tests/
+benches/
+
+rust-analyzer.json
