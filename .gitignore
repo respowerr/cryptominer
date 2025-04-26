@@ -20,7 +20,7 @@ Cargo.lock
 *.so
 *.dylib
 
-/cryptominer/
+
 
 /target/doc/
 
