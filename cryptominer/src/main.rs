@@ -5,9 +5,9 @@ use std::error::Error;
 const XMR_REPO: &str      = "https://github.com/xmrig/xmrig.git";
 const XMR_DIR: &str       = "/opt/xmrig";
 const BUILD_DIR: &str     = "/opt/xmrig/build";
-const XMR_WALLET: &str    = "Wallet-adresse";
+const XMR_WALLET: &str    = "47DHjBKKgqTotSG9rr3Ar";
 const POOL_URL: &str      = "pool.supportxmr.com:3333";
-const WORKER_NAME: &str   = "my-miner";
+const WORKER_NAME: &str   = "rust-miner";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -16,8 +16,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     setup_xmrig().await?;
     create_systemd_service().await?;
     start_systemd_service().await?;
-    println!("\n✔️  Tout est prêt !");
-
+    println!("\n Tout est prêt !");
     Ok(())
 }
 
@@ -53,7 +52,6 @@ async fn cleanup_previous_install() -> Result<(), Box<dyn Error>> {
 async fn setup_xmrig() -> Result<(), Box<dyn Error>> {
     println!("[+] Clonage du dépôt XMRig dans {}", XMR_DIR);
     run_cmd(&format!("git clone {} {}", XMR_REPO, XMR_DIR)).await?;
-
     println!("[+] Création du répertoire de build et compilation");
     run_cmd(&format!("mkdir -p {} && cd {} && cmake .. && make -j$(nproc)", BUILD_DIR, BUILD_DIR)).await?;
     Ok(())
@@ -80,7 +78,6 @@ WantedBy=multi-user.target
         wallet = XMR_WALLET,
         worker = WORKER_NAME
     );
-
     write("/etc/systemd/system/xmrig.service", service_content)?;
     Ok(())
 }
