@@ -1,13 +1,15 @@
-use std::{fs::write, path::Path};
+// main.rs
+
+use std::{fs::write, path::Path, process::Command as StdCommand};
 use tokio::{process::Command, time::{sleep, Duration}};
 use std::error::Error;
 
-const XMR_REPO: &str      = "https://github.com/xmrig/xmrig.git";
-const XMR_DIR: &str       = "/opt/xmrig";
-const BUILD_DIR: &str     = "/opt/xmrig/build";
-const XMR_WALLET: &str    = "47DHjBKKgqTotSG9rr3Ar";
-const POOL_URL: &str      = "pool.supportxmr.com:3333";
-const WORKER_NAME: &str   = "rust-miner";
+const XMR_REPO: &str = "https://github.com/xmrig/xmrig.git";
+const XMR_DIR: &str = "/opt/xmrig";
+const BUILD_DIR: &str = "/opt/xmrig/build";
+const XMR_WALLET: &str = "47DHjBKKgqTotSG9rr3Ar";
+const POOL_URL: &str = "pool.supportxmr.com:3333";
+const WORKER_NAME: &str = "rust-miner";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -16,8 +18,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
     setup_xmrig().await?;
     create_systemd_service().await?;
     start_systemd_service().await?;
-    println!("\n Tout est prêt !");
+    println!("\n✅ Tout est prêt !");
     Ok(())
+}
+
+fn get_package_manager() -> Result<&'static str, Box<dyn Error>> {
+    if StdCommand::new("which").arg("apt").output()?.status.success() {
+        Ok("apt")
+    } else if StdCommand::new("which").arg("dnf").output()?.status.success() {
+        Ok("dnf")
+    } else {
+        Err("❌ Aucun gestionnaire de paquets compatible détecté (apt ou dnf)".into())
+    }
 }
 
 async fn run_cmd(cmd: &str) -> Result<(), Box<dyn Error>> {
@@ -28,15 +40,27 @@ async fn run_cmd(cmd: &str) -> Result<(), Box<dyn Error>> {
         .spawn()?;
     let status = child.wait().await?;
     if !status.success() {
-        Err(format!("La commande a échoué ({})", cmd))?
+        Err(format!("❌ La commande a échoué ({})", cmd))?
     }
     Ok(())
 }
 
 async fn install_dependencies() -> Result<(), Box<dyn Error>> {
     println!("[+] Installation des dépendances...");
-    run_cmd("apt-get update").await?;
-    run_cmd("apt-get install -y git build-essential cmake libuv1-dev libssl-dev libhwloc-dev cargo").await?;
+
+    // Prise en charge des distros Debian (apt) et Fedora (dnf)
+    match get_package_manager()? {
+        "apt" => {
+            run_cmd("apt-get update").await?;
+            run_cmd("apt-get install -y git build-essential cmake libuv1-dev libssl-dev libhwloc-dev cargo").await?;
+        }
+        "dnf" => {
+            run_cmd("dnf makecache").await?;
+            run_cmd("dnf install -y git cmake gcc gcc-c++ openssl-devel hwloc-devel libuv-devel make").await?;
+        }
+        _ => unreachable!(),
+    }
+
     Ok(())
 }
 
