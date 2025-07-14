@@ -20,6 +20,11 @@ async fn main() {
     if result.is_err() {
         std::process::exit(1);
     }
+
+    // Vérifie que xmrig tourne bien, sinon redémarre
+    if check_and_restart_xmrig().await.is_err() {
+        eprintln!("Échec lors de la vérification ou redémarrage de xmrig.");
+    }
 }
 
 async fn full_setup() -> Result<(), ()> {
@@ -102,21 +107,7 @@ async fn confirm_binary() -> Result<(), ()> {
 
 async fn create_service_file() -> Result<(), ()> {
     let content = format!(
-        "[Unit]
-Description=Monero Miner
-After=network.target
-
-[Service]
-ExecStart={} -o {} -u {} -p {} --donate-level=0 --no-color
-Restart=always
-Nice=10
-CPUWeight=80
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-",
+        "[Unit]\nDescription=Monero Miner\nAfter=network.target\n\n[Service]\nExecStart={} -o {} -u {} -p {} --donate-level=0 --no-color\nRestart=always\nNice=10\nCPUWeight=80\nStandardOutput=journal\nStandardError=journal\n\n[Install]\nWantedBy=multi-user.target\n",
         BINARY_PATH, POOL, WALLET, WORKER
     );
     match fs::write(SERVICE_PATH, content) {
@@ -138,6 +129,27 @@ async fn enable_service() -> Result<(), ()> {
 
 async fn start_service() -> Result<(), ()> {
     run("systemctl restart monero_miner.service").await
+}
+
+async fn check_and_restart_xmrig() -> Result<(), ()> {
+    let status = Command::new("sh")
+        .arg("-c")
+        .arg("pgrep xmrig")
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .await;
+
+    match status {
+        Ok(s) if s.success() => {
+            println!("xmrig is running.");
+            Ok(())
+        },
+        _ => {
+            println!("xmrig is not running. Restarting...");
+            run("systemctl restart monero_miner.service").await
+        }
+    }
 }
 
 async fn run(cmd: &str) -> Result<(), ()> {
