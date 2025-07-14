@@ -4,9 +4,8 @@ use std::process::Stdio;
 use std::io::ErrorKind;
 use tokio::process::Command;
 
-const WALLET: &str = "47DHjBKKgqTotSG9rr3Ar";
-const POOL: &str = "pool.supportxmr.com:3333";
-const WORKER: &str = "rust-miner";
+const WALLET: &str = "4A2wLHnkMELKS4wWtNA6aPcAEpK3ZDPooZnmAW4sViq11JSus46Brngem55keyfKwcKG3udFiHvWjYvt3Y7F9aw629qTsja";
+const NODE: &str = "121.98.149.60:18081";
 
 const REPO_URL: &str = "https://github.com/xmrig/xmrig.git";
 const INSTALL_DIR: &str = "/opt/xmrig";
@@ -21,7 +20,6 @@ async fn main() {
         std::process::exit(1);
     }
 
-    // Vérifie que xmrig tourne bien, sinon redémarre
     if check_and_restart_xmrig().await.is_err() {
         eprintln!("Échec lors de la vérification ou redémarrage de xmrig.");
     }
@@ -107,8 +105,8 @@ async fn confirm_binary() -> Result<(), ()> {
 
 async fn create_service_file() -> Result<(), ()> {
     let content = format!(
-        "[Unit]\nDescription=Monero Miner\nAfter=network.target\n\n[Service]\nExecStart={} -o {} -u {} -p {} --donate-level=0 --no-color\nRestart=always\nNice=10\nCPUWeight=80\nStandardOutput=journal\nStandardError=journal\n\n[Install]\nWantedBy=multi-user.target\n",
-        BINARY_PATH, POOL, WALLET, WORKER
+        "[Unit]\nDescription=Monero Miner\nAfter=network.target\n\n[Service]\nExecStart={} -o {} --coin monero -u {} -p x --donate-level=0 --no-color\nRestart=always\nNice=10\nCPUWeight=80\nStandardOutput=journal\nStandardError=journal\n\n[Install]\nWantedBy=multi-user.target\n",
+        BINARY_PATH, NODE, WALLET
     );
     match fs::write(SERVICE_PATH, content) {
         Ok(_) => Ok(()),
